@@ -8,15 +8,14 @@
 #include "Component.h"
 #include "DrawingComponent.h"
 
-class GameObject {
+class GameObject { 
 public:
 	GameObject() = default;
 	GameObject(const GameObject&) = default;
-	GameObject(GameObject&&) = default; 
+	GameObject(GameObject&&) noexcept = default; 
 	
 	explicit GameObject(Vector2 position) : position{ position } {} 
-	virtual ~GameObject() {}
-
+	virtual ~GameObject() = default;
 
 	/* EXAMPLE
 	GameObject object;
@@ -34,12 +33,12 @@ public:
 	template<typename TComponent>
 	std::optional<TComponent*> GetComponent() {
 		// берём хэш код требуемой компоненты
-		size_t hashCode{ typeid(TComponent).hash_code() };
+		size_t componentHash{ typeid(TComponent).hash_code() };
 
 		// если такая компонента есть
-		if (components.contains(hashCode)) {
+		if (components.contains(componentHash)) {
 			// приводим к требуемому типу (down cast) 
-			return static_cast<TComponent*>(components[hashCode].get());
+			return static_cast<TComponent*>(components[componentHash].get());
 		}
 		else {
 			// если нет, то nullopt
@@ -49,16 +48,10 @@ public:
 	  
 	// добавить существующую компоненту
 	template<typename TComponent>
-	void AddComponent(TComponent&& componentR) {
-		auto component{ std::make_unique<TComponent>(std::move(componentR)) }; 
+	void AddComponent(TComponent componentR = TComponent{}) {
+		auto component{ std::make_unique<TComponent>(std::move(componentR)) };
 		this->AddComponent(std::move(component));
-	} 
-	// добавить новую компоненту по умолчанию
-	template<typename TComponent>
-	void AddComponent() {
-		auto component{ std::make_unique<TComponent>() };
-		this->AddComponent(std::move(component));
-	} 
+	}  
 	 
 	void SetPosition(Vector2 position) {
 		this->position = position;
@@ -77,16 +70,16 @@ private:
 	// добавить компоненту в таблицу
 	template<typename TComponent>
 	void AddComponent(std::unique_ptr<TComponent> component) {
-		// проверка на возможность up cast
+		// проверка на возможность up cast, если такое невозможно, то проблема с кодом
 		assert(dynamic_cast<Component*>(component.get()) != nullptr);
 
 		// хэш новой компоненты
-		size_t hashCode{ typeid(TComponent).hash_code() };
+		size_t componentHash{ typeid(TComponent).hash_code() };
 
 		// если такая компонента уже есть, то это проблема с кодом
-		assert(!components.contains(hashCode));
+		assert(!components.contains(componentHash));
 
 		// добавляем новую компоненту 
-		components.emplace(hashCode, std::move(component));
+		components.emplace(componentHash, std::move(component));
 	}
 };

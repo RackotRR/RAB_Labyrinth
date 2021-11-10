@@ -7,6 +7,7 @@
 #include "Vector2.h"
 #include "GameObject.h"
 
+
 class World {
 	// тип хранилища объектов
 public:
@@ -22,4 +23,4 @@ public:
 	 
 private:
 	TGameObjects gameObjects;
-};
+}; 
